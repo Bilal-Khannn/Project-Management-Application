@@ -15,20 +15,24 @@ export default function AuthProvider({ children }) {
 
   function signInwithGoogle() {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
     return signInWithPopup(auth, provider);
   }
 
   function logout() {
     return signOut(auth);
   }
+
   const value = {
     currentUser,
     signInwithGoogle,
     logout,
+    setCurrentUser,
   };
 
   useEffect(() => {
     auth.onAuthStateChanged(setCurrentUser);
+    // console.log(currentUser);
   }, []);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
