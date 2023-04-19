@@ -7,12 +7,27 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import db from "../utils/init-firebase";
+import { useEffect } from "react";
 
 function Nav() {
   const { signInwithGoogle, currentUser, logout, setCurrentUser } = useAuth();
 
+  function checkLogin() {
+    if (currentUser) {
+      document.getElementById("get-started").classList.add("hidden");
+      document.getElementById("logout").classList.remove("hidden");
+    } else {
+      document.getElementById("get-started").classList.remove("hidden");
+      document.getElementById("logout").classList.add("hidden");
+    }
+  }
+
+  useEffect(() => {
+    checkLogin();
+  }, [currentUser]);
+
   return (
-    <div className="h-14 flex justify-around w-full">
+    <div className="h-14 flex justify-around w-full ">
       <div className="flex items-center">
         <a
           href="/"
@@ -48,9 +63,12 @@ function Nav() {
           </a>
         </li>
       </ul>
+
+      {/* get started button and logout button */}
       <div className="flex items-center">
         <button
-          className="text-white bg-pink-500 p-5 hover:bg-pink-400 transition duration-300"
+          id="get-started"
+          className="text-white bg-pink-500 p-4 hover:bg-pink-400 transition duration-300"
           onClick={() =>
             signInwithGoogle()
               .then((user) => {
@@ -73,10 +91,11 @@ function Nav() {
           }
         >
           Get Started
-          {currentUser && <p>{currentUser.displayName}</p>}
+          {/* {currentUser && <p>{currentUser.displayName}</p>} */}
         </button>
         <button
-          className="text-white bg-pink-500 p-5 hover:bg-pink-400 transition duration-300"
+          id="logout"
+          className="text-white bg-pink-500 p-4 hover:bg-pink-400 transition duration-300 hidden"
           onClick={logout}
         >
           Logout
