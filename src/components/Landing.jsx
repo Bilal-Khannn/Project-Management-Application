@@ -1,5 +1,3 @@
-import Nav from "./Nav";
-
 function Landing() {
   const scrollToFeatures = () => {
     const featuresSection = document.getElementById("features");
