@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import db from "../utils/init-firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { collection, addDoc, where, getDocs, query } from "firebase/firestore";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
 
 function Dashboard() {
   const [selectedOption, setSelectedOption] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
+
   const { currentUser } = useAuth();
 
   const handleOptionClick = (option) => {
@@ -152,10 +156,20 @@ function Dashboard() {
                 <div className=" h-4/5 w-auto flex flex-wrap">
                   {projects.map((project) => (
                     <div
-                      className="bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg h-1/2 w-1/6 mt-5 hover:bg-gray-200"
+                      className="relative bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg h-1/2 w-1/6 mt-5 hover:bg-gray-200"
                       key={project.id}
                     >
-                      <button className="">{project.name}</button>
+                      <button
+                        onClick={() => {
+                          setSelectedOption("manageTask"),
+                            setSelectedProject(project.id);
+                        }}
+                      >
+                        {project.name}
+                      </button>
+                      <button className="absolute bottom-1 right-4 text-2xl">
+                        <FontAwesomeIcon icon={faEllipsis} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -169,9 +183,23 @@ function Dashboard() {
           </div>
         )}
         {selectedOption === "manageTask" && (
-          <div>
-            <h1>Your Projects</h1>
-          </div>
+          <>
+            <div className="flex justify-center">
+              <h1 className="ml-2 font-bold text-3xl text-indigo-500">
+                Project Workspace
+              </h1>
+            </div>
+            <div>
+              <h1 className="ml-2 font-bold text-2xl text-indigo-500 mt-5">
+                {projects.map((project) => {
+                  if (project.id === selectedProject) {
+                    return project.name;
+                  }
+                })}
+              </h1>
+            </div>
+            <div className="flex flex-wrap"></div>
+          </>
         )}
         {selectedOption === "viewProjectProgress" && (
           <div>This is project progress</div>
