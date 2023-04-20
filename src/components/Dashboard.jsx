@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
 import db from "../utils/init-firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { collection, addDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, where, getDocs, query } from "firebase/firestore";
 
 function Dashboard() {
   const [selectedOption, setSelectedOption] = useState("");
   const { currentUser } = useAuth();
 
   const handleOptionClick = (option) => {
+    if (option === "createProject") {
+      fetchProjects();
+    }
     setSelectedOption(option);
   };
 
   const [isOpen, setIsOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
 
   function togglePopup() {
     setIsOpen(!isOpen);
@@ -35,19 +39,25 @@ function Dashboard() {
     }
   }
 
-  // fetch projects from the database where the current user is the creator
   const fetchProjects = async () => {
-    const projects = await db
-      .collection("projects")
-      .where("createdBy", "==", currentUser.uid)
-      .get();
-    console.log(projects);
+    try {
+      let id = currentUser.uid;
+      const docref = collection(db, "projects");
+      const q = query(docref, where("createdBy", "==", id));
+      const querySnapshot = await getDocs(q);
+      const fetchedProjects = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setProjects(fetchedProjects);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  //fetch projects whenver the component is mounted
   useEffect(() => {
-    fetchProjects();
-  }, [createProject()]);
+    console.log(projects);
+  }, [projects]);
 
   return (
     <div className="h-screen flex">
@@ -106,7 +116,7 @@ function Dashboard() {
       <div className="w-4/5 p-4 bg-indigo-50">
         {selectedOption === "createProject" && (
           <>
-            <div className="h-full w-auto   ">
+            <div className="h-full w-auto">
               <div className="flex h-1/3 w-full ">
                 <div className="p-2 h-1/2 w-1/5 flex justify-center">
                   <button
@@ -117,7 +127,7 @@ function Dashboard() {
                   </button>
                 </div>
                 {isOpen && (
-                  <div className="ml-4 p-2 h-1/2 w-1/4 border border-gray-300 relative">
+                  <div className="ml-4 p-2 h-2/3 w-1/4 border border-gray-300 relative">
                     <input
                       type="text"
                       id="project_title"
@@ -139,8 +149,15 @@ function Dashboard() {
                 <h1 className="ml-2 font-bold text-2xl text-indigo-500">
                   Your Projects
                 </h1>
-                <div>
-                  <h1></h1>
+                <div className=" h-4/5 w-auto flex flex-wrap">
+                  {projects.map((project) => (
+                    <div
+                      className="bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg h-1/2 w-1/6 mt-5 hover:bg-gray-200"
+                      key={project.id}
+                    >
+                      <button className="">{project.name}</button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
