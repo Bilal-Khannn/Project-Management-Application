@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import db from "../utils/init-firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc } from "firebase/firestore";
 
 function Dashboard() {
   const [selectedOption, setSelectedOption] = useState("");
@@ -34,6 +34,20 @@ function Dashboard() {
       console.error("Error adding document: ", error);
     }
   }
+
+  // fetch projects from the database where the current user is the creator
+  const fetchProjects = async () => {
+    const projects = await db
+      .collection("projects")
+      .where("createdBy", "==", currentUser.uid)
+      .get();
+    console.log(projects);
+  };
+
+  //fetch projects whenver the component is mounted
+  useEffect(() => {
+    fetchProjects();
+  }, [createProject()]);
 
   return (
     <div className="h-screen flex">
@@ -92,39 +106,43 @@ function Dashboard() {
       <div className="w-4/5 p-4 bg-indigo-50">
         {selectedOption === "createProject" && (
           <>
-            <div>
-              <h1>Bilal</h1>
-            </div>
-            <div className="h-screen w-auto flex">
-              <div className="p-2 h-1/5 w-1/5 flex justify-center">
-                <button
-                  className="w-full h-full text-white font-bold bg-indigo-400 hover:bg-indigo-300 transition duration-300"
-                  onClick={togglePopup}
-                >
-                  Create a new Project
-                </button>
-              </div>
-              {isOpen && (
-                <div className="ml-4 p-2 h-1/4 w-1/4 border border-gray-300 relative">
-                  <input
-                    type="text"
-                    id="project_title"
-                    className="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:border-indigo-500 focus:outline-none"
-                    placeholder="Project Title"
-                    required
-                  ></input>
+            <div className="h-full w-auto   ">
+              <div className="flex h-1/3 w-full ">
+                <div className="p-2 h-1/2 w-1/5 flex justify-center">
                   <button
-                    onClick={createProject}
-                    className="absolute bottom-3 right-3 bg-indigo-400 py-2 px-4 rounded-lg hover:bg-indigo-300 transition duration-300"
+                    className="w-full h-full text-white font-bold bg-indigo-400 hover:bg-indigo-300 transition duration-300"
+                    onClick={togglePopup}
                   >
-                    Create
+                    Create a new Project
                   </button>
                 </div>
-              )}
-            </div>
+                {isOpen && (
+                  <div className="ml-4 p-2 h-1/2 w-1/4 border border-gray-300 relative">
+                    <input
+                      type="text"
+                      id="project_title"
+                      className="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:border-indigo-500 focus:outline-none"
+                      placeholder="Project Title"
+                      required
+                    ></input>
+                    <button
+                      onClick={createProject}
+                      className="absolute text-white  bottom-3 right-3 bg-indigo-400 py-2 px-4 rounded-lg hover:bg-indigo-300 transition duration-300"
+                    >
+                      Create
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            <div className="bg-red-500">
-              <h1>Your Projects</h1>
+              <div className="h-4/6 w-full">
+                <h1 className="ml-2 font-bold text-2xl text-indigo-500">
+                  Your Projects
+                </h1>
+                <div>
+                  <h1></h1>
+                </div>
+              </div>
             </div>
           </>
         )}
