@@ -1,8 +1,10 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
 function Landing() {
-  const scrollToFeatures = () => {
-    const featuresSection = document.getElementById("features");
-    featuresSection.scrollIntoView({ behavior: "smooth" });
-  };
+  const { currentUser } = useAuth();
 
   return (
     <>
@@ -16,6 +18,16 @@ function Landing() {
             Collaborate with your team members, assign tasks, and monitor
             progress, all from a single, intuitive dashboard.
           </p>
+          {currentUser && (
+            <Link
+              className="mr-auto ml-14 mt-6 text-white font-bold bg-indigo-500 p-4 rounded-xl hover:bg-white hover:text-indigo-500 text-xl transition duration-300"
+              to="/dashboard"
+            >
+              <button className="" style={{ alignSelf: "flex-start" }}>
+                Dashboard <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </Link>
+          )}
         </div>
 
         <div className="flex justify-center items-center h-auto w-1/2">

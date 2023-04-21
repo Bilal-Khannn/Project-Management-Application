@@ -4,12 +4,23 @@ import { useAuth } from "../contexts/AuthContext";
 import { collection, addDoc, where, getDocs, query } from "firebase/firestore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
+import { Link, redirect } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
 
   const { currentUser } = useAuth();
+
+  // redirect to Landing page if user logs out
+  useEffect(() => {
+    // Check if user is logged in
+    if (!currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
 
   const handleOptionClick = (option) => {
     if (option === "createProject") {

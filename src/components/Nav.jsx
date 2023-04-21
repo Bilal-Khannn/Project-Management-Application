@@ -31,7 +31,7 @@ function Nav() {
       <div className="flex items-center">
         <a
           href="/"
-          className="font-bold text-3xl hover:text-purple-500 transition duration-500"
+          className="font-bold text-3xl hover:text-purple-500 transition duration-300"
         >
           PlanIt
         </a>
@@ -41,7 +41,7 @@ function Nav() {
         <li>
           <a
             href="/"
-            className="hover:text-purple-500 transition duration-500 text-lg"
+            className="hover:text-purple-500 transition duration-300 text-lg"
           >
             Home
           </a>
@@ -49,7 +49,7 @@ function Nav() {
         <li>
           <a
             href="/"
-            className="hover:text-purple-500 transition duration-500 text-lg"
+            className="hover:text-purple-500 transition duration-300 text-lg"
           >
             Services
           </a>
@@ -57,7 +57,7 @@ function Nav() {
         <li>
           <a
             href="/"
-            className="hover:text-purple-500 transition duration-500 text-lg"
+            className="hover:text-purple-500 transition duration-300 text-lg"
           >
             About
           </a>
