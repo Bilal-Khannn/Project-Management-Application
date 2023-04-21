@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from "react";
 import db from "../utils/init-firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { collection, addDoc, where, getDocs, query } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  where,
+  getDocs,
+  query,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
-import { Link, redirect } from "react-router-dom";
+import {
+  faEllipsis,
+  faTrashCan,
+  faPlus,
+  faClock,
+} from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -25,6 +39,8 @@ function Dashboard() {
   const handleOptionClick = (option) => {
     if (option === "createProject") {
       fetchProjects();
+    } else if (option === "manageTask") {
+      fetchTasks();
     }
     setSelectedOption(option);
   };
@@ -73,6 +89,107 @@ function Dashboard() {
   useEffect(() => {
     console.log(projects);
   }, [projects]);
+
+  function handledropdown() {
+    console.log("dropdown clicked!");
+  }
+
+  //delete the project from the database
+  async function handleDeleteProject(id) {
+    try {
+      const projectDocRef = doc(db, "projects", id);
+      await deleteDoc(projectDocRef);
+      console.log("Project deleted successfully!");
+      setProjects(projects.filter((project) => project.id !== id));
+    } catch (error) {
+      console.error("Error deleting project: ", error);
+    }
+  }
+
+  /*Task management related stuff*/
+  const [tasks, setTasks] = useState([]);
+
+  const [deadline, setDeadline] = useState(new Date());
+
+  const handleDateChange = (date) => {
+    setDeadline(date);
+  };
+
+  const createTask = async () => {
+    const name = document.getElementById("task_name").value;
+    const projectId = selectedProject;
+    const status = document.getElementById("task_status").value;
+
+    try {
+      // Add a new document with the provided values to the "tasks" collection
+      const docRef = await addDoc(collection(db, "tasks"), {
+        name,
+        projectId,
+        deadline,
+        status,
+      });
+
+      console.log("Document written with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
+
+  // fetch the tasks created in the function above
+  const fetchTasks = async () => {
+    try {
+      const docref = collection(db, "tasks");
+      const q = query(docref, where("projectId", "==", selectedProject));
+      const querySnapshot = await getDocs(q);
+      const fetchedTasks = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    console.log(tasks);
+  }, [tasks]);
+
+  //delete the task from the database
+  async function handleDeleteTask(id) {
+    try {
+      const taskDocRef = doc(db, "tasks", id);
+      await deleteDoc(taskDocRef);
+      console.log("Task deleted successfully!");
+      setTasks(tasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
+  }
+
+  function convertDate(deadline) {
+    const timestamp = deadline;
+
+    const date = new Date(
+      timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000
+    );
+
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: true,
+    };
+
+    const formattedDateTime = new Intl.DateTimeFormat("en-US", options).format(
+      date
+    );
+
+    return formattedDateTime;
+  }
 
   return (
     <div className="h-screen flex">
@@ -128,7 +245,7 @@ function Dashboard() {
           </button>
         </ul>
       </div>
-      <div className="w-4/5 p-4 bg-indigo-50">
+      <div className="w-4/5  p-4 bg-indigo-50 overflow-auto">
         {selectedOption === "createProject" && (
           <>
             <div className="h-full w-auto">
@@ -178,8 +295,17 @@ function Dashboard() {
                       >
                         {project.name}
                       </button>
-                      <button className="absolute bottom-1 right-4 text-2xl">
+                      <button
+                        className="absolute bottom-1 right-4 text-2xl"
+                        onClick={handledropdown}
+                      >
                         <FontAwesomeIcon icon={faEllipsis} />
+                      </button>
+                      <button
+                        className="absolute bottom-1 left-3 text-2xl hover:text-red-500"
+                        onClick={() => handleDeleteProject(project.id)}
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} />
                       </button>
                     </div>
                   ))}
@@ -209,7 +335,157 @@ function Dashboard() {
                 })}
               </h1>
             </div>
-            <div className="flex flex-wrap"></div>
+
+            {/* Task adding starts here  */}
+            <div className="flex h-1/3 w-full mt-3">
+              <div className="p-2 h-1/2 w-1/5 flex justify-center">
+                <button
+                  className="w-full h-full text-white p-2 font-bold bg-indigo-400 hover:bg-indigo-300 transition duration-300"
+                  onClick={togglePopup}
+                >
+                  <FontAwesomeIcon icon={faPlus} className="mr-2 font-bold" />{" "}
+                  Add a new Task
+                </button>
+              </div>
+              {isOpen && (
+                <div className="ml-4 p-2 h-full w-1/3 border border-gray-300 relative">
+                  <input
+                    type="text"
+                    id="task_name"
+                    className="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:border-indigo-500 focus:outline-none"
+                    placeholder="Task name"
+                    required
+                  ></input>
+
+                  <select
+                    id="task_status"
+                    className="mt-2 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option value="" disabled>
+                      Task Status
+                    </option>
+                    <option value="todo">To Do</option>
+                    <option value="inprogress">In Progress</option>
+                    <option value="done">Done</option>
+                  </select>
+
+                  <DatePicker
+                    selected={deadline}
+                    onChange={handleDateChange}
+                    className="mt-2 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:border-indigo-500 focus:outline-none"
+                  />
+
+                  <button
+                    onClick={createTask}
+                    className="absolute text-white  bottom-3 right-3 bg-indigo-400 py-2 px-4 rounded-lg hover:bg-indigo-300 transition duration-300"
+                  >
+                    Create
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col mt-5">
+              <h2 className="ml-2 font-bold text-xl text-indigo-500">To Do</h2>
+              <div className="flex flex-wrap">
+                {tasks.map((task) => {
+                  if (task.status === "todo") {
+                    return (
+                      <div
+                        className="h-36 w-64 border relative bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg mt-5 hover:bg-gray-200"
+                        key={task.id}
+                      >
+                        <p>{task.name}</p>
+                        <p className="mt-2 text-red-500">
+                          <FontAwesomeIcon icon={faClock} />{" "}
+                          {convertDate(task.deadline)}
+                        </p>
+
+                        <button
+                          className="absolute bottom-1 right-4 text-2xl"
+                          onClick={handledropdown}
+                        >
+                          <FontAwesomeIcon icon={faEllipsis} />
+                        </button>
+                        <button
+                          className="absolute bottom-1 left-3 text-2xl hover:text-red-500"
+                          onClick={() => handleDeleteTask(task.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrashCan} />
+                        </button>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+
+              <h2 className="ml-2 font-bold text-xl text-indigo-500">
+                In Progress
+              </h2>
+              <div className="flex flex-wrap">
+                {tasks.map((task) => {
+                  if (task.status === "todo") {
+                    return (
+                      <div
+                        className="h-36 w-64 border relative bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg mt-5 hover:bg-gray-200"
+                        key={task.id}
+                      >
+                        <p>{task.name}</p>
+                        <p className="mt-2 text-red-500">
+                          <FontAwesomeIcon icon={faClock} />{" "}
+                          {convertDate(task.deadline)}
+                        </p>
+
+                        <button
+                          className="absolute bottom-1 right-4 text-2xl"
+                          onClick={handledropdown}
+                        >
+                          <FontAwesomeIcon icon={faEllipsis} />
+                        </button>
+                        <button
+                          className="absolute bottom-1 left-3 text-2xl hover:text-red-500"
+                          onClick={() => handleDeleteTask(task.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrashCan} />
+                        </button>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+              <h2 className="ml-2 font-bold text-xl text-indigo-500">Done</h2>
+              <div className="flex flex-wrap">
+                {tasks.map((task) => {
+                  if (task.status === "done") {
+                    return (
+                      <div
+                        className="h-36 w-64 border relative bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg mt-5 hover:bg-gray-200"
+                        key={task.id}
+                      >
+                        <p>{task.name}</p>
+                        <p className="mt-2 text-red-500">
+                          <FontAwesomeIcon icon={faClock} />{" "}
+                          {convertDate(task.deadline)}
+                        </p>
+
+                        <button
+                          className="absolute bottom-1 right-4 text-2xl"
+                          onClick={handledropdown}
+                        >
+                          <FontAwesomeIcon icon={faEllipsis} />
+                        </button>
+                        <button
+                          className="absolute bottom-1 left-3 text-2xl hover:text-red-500"
+                          onClick={() => handleDeleteTask(task.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrashCan} />
+                        </button>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            </div>
           </>
         )}
         {selectedOption === "viewProjectProgress" && (
