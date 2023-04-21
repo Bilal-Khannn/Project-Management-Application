@@ -424,7 +424,7 @@ function Dashboard() {
               </h2>
               <div className="flex flex-wrap">
                 {tasks.map((task) => {
-                  if (task.status === "todo") {
+                  if (task.status === "inprogress") {
                     return (
                       <div
                         className="h-36 w-64 border relative bg-white text-indigo-500 font-bold m-2 p-2 rounded-lg shadow-lg mt-5 hover:bg-gray-200"
